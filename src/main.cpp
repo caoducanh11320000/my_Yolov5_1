@@ -75,8 +75,16 @@ int main(int argc, char** argv) {
         }    
         int id_img=0;
         IMXAIEngine::trt_input trt_input;
-        cv::VideoWriter videoWriter(outputVideoPath, cv::VideoWriter::fourcc('M', 'J', 'P', 'G'), 30, imageSize);
-        cv::VideoWriter videoWriter2(outputVideoPath2, cv::VideoWriter::fourcc('M', 'J', 'P', 'G'), 30, imageSize);
+
+	cv::Mat tmp;
+	cap >> tmp;
+	int w= cap.get(cv::CAP_PROP_FRAME_WIDTH);
+	int h= cap.get(cv::CAP_PROP_FRAME_HEIGHT);
+	std::cout<<"Chieu dai: " << w << "chieu rong: "<< h <<endl;
+	cv::Size imageSize1(w, h);
+
+        cv::VideoWriter videoWriter(outputVideoPath, cv::VideoWriter::fourcc('H', '2', '6', '4'), 25, imageSize);
+        cv::VideoWriter videoWriter2(outputVideoPath2, cv::VideoWriter::fourcc('M', 'J', 'P', 'G'), 25, imageSize);
 
         //Input vaf detect
         while(true){
@@ -100,12 +108,12 @@ int main(int argc, char** argv) {
                 for(int j=0; j< 48; j++){
                     cv::Mat img1 = trt_inputs[j].input_img;
                     cv::resize(img1, img1, imageSize);
-                    if(id_img <1500){
+                    
                         videoWriter.write(img1);
-                    }
-                    else{
-                        videoWriter2.write(img1);
-                    }
+                    
+                    
+                       
+                    
                 }
                 trt_inputs.clear();
                 std::vector< IMXAIEngine::trt_input> ().swap(trt_inputs) ;

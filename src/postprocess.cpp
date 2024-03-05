@@ -191,7 +191,8 @@
 #include "postprocess.h"
 #include "utils.h"
 
-const std::string names[3] = {"bus", "car", "truck"};
+const std::string names[5] = {"bus", "car","motorbike", "truck", "people"};
+//const std::string names[20] = {"ae", "bicycle", "bird", "boat","bottle", "bus", "car", "cat", "chair", "cow", "din", "dog","horse", "motorbike", "person", "pott", "sheep", "sofa", "train", "tv"}; 
 
 cv::Rect get_rect(cv::Mat& img, float bbox[4]) {
   float l, r, t, b;
