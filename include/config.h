@@ -20,7 +20,7 @@ constexpr static int kNumClass = 5;
 // Classfication model's number of classes
 constexpr static int kClsNumClass = 1000;
 
-constexpr static int kBatchSize = 48;
+constexpr static int kBatchSize = 1;
 
 // Yolo's input width and height must by divisible by 32
 constexpr static int kInputH = 640;

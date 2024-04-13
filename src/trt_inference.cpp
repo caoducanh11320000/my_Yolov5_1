@@ -86,10 +86,17 @@ void serialize_engine(unsigned int max_batchsize, bool& is_p6, float& gd, float&
 
   // Close everything down
 
-  delete engine;
-  delete config;
-  delete serialized_engine;
-  delete builder;
+  // delete engine;
+  // delete config;
+  //delete serialized_engine;
+  // delete builder;
+
+    // Close everything down
+  engine->destroy();
+  config->destroy();
+  serialized_engine->destroy();
+  builder->destroy();
+
 }
 
 void prepare_buffers(ICudaEngine* engine, float** gpu_input_buffer, float** gpu_output_buffer, float** cpu_output_buffer) {
@@ -180,76 +187,74 @@ trt_error TRT_Inference::init_inference(std::string engine_name , const char * i
 
 
 trt_error TRT_Inference::trt_detection(std::vector<IMXAIEngine::trt_input> &trt_inputs, std::vector<IMXAIEngine::trt_output> &trt_outputs){
-    auto start = std::chrono::system_clock::now();
-    std::cout <<" Thuc hien do Inference" << std::endl;
+    //auto start = std::chrono::system_clock::now();
+    //std::cout <<" Thuc hien do Inference" << std::endl;
     for (size_t i = 0; i < trt_inputs.size(); i += kBatchSize) {
 
-    // Get a batch of images
-    std::vector<cv::Mat> img_batch;  //// day va vector chua anh
+      // Get a batch of images
+      std::vector<cv::Mat> img_batch;  //// day va vector chua anh
 
-    for (size_t j = i; j < i + kBatchSize && j < trt_inputs.size(); j++) {
-      //cv::Mat img = cv::imread(img_dir + "/" + file_names[j]);
-      cv::Mat img = trt_inputs[j].input_img;
-      img_batch.push_back(img);
-      //img_name_batch.push_back(file_names[j]);
-      std::cout << "Thuc hien thanh cong voi anh: "<< j<<std::endl;
-    }
-    
-    // Preprocess
-    std:: cout<<"Preprocess" << std::endl;
-    cuda_batch_preprocess(img_batch, gpu_buffers[0], kInputW, kInputH, stream);
-
-    // Run inference
-
-    infer(*context, stream, (void**)gpu_buffers, cpu_output_buffer, kBatchSize);
-    //auto end = std::chrono::system_clock::now();
-    //std::cout << "inference time: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
-
-    // NMS
-    std::vector<std::vector<Detection>> res_batch;
-    batch_nms(res_batch, cpu_output_buffer, img_batch.size(), kOutputSize, kConfThresh, kNmsThresh);
-
-    // Draw bounding boxes
-    draw_bbox(img_batch, res_batch);
-    // Input 
-    for(size_t n =0; n <img_batch.size(); n++){
-      trt_inputs[n +i].input_img = img_batch[n];
-      trt_inputs[n +i].id_img = n+i;
-    }
-    //Output
-    for (size_t m = 0; m < img_batch.size(); m++) {
-      auto& res = res_batch[m];
-      //cv::Mat img = img_batch[i];
-      std::vector<trt_results> image_result;
-      IMXAIEngine::trt_output out_img;
-      for (size_t j = 0; j < res.size(); j++) {
-            trt_results boundingbox_result;
-            boundingbox_result.ClassID = res[j].class_id;
-            boundingbox_result.Confidence = res[j].conf;
-            boundingbox_result.bbox[0] = res[j].bbox[0];
-            boundingbox_result.bbox[1] = res[j].bbox[1];
-            boundingbox_result.bbox[2] = res[j].bbox[2];
-            boundingbox_result.bbox[3] = res[j].bbox[3];
-
-            //image_result.push_back(boundingbox_result);
-            out_img.results.push_back(boundingbox_result);
+      for (size_t j = i; j < i + kBatchSize && j < trt_inputs.size(); j++) {
+        //cv::Mat img = cv::imread(img_dir + "/" + file_names[j]);
+        cv::Mat img = trt_inputs[j].input_img;
+        img_batch.push_back(img);
+        //img_name_batch.push_back(file_names[j]);
+        //std::cout << "Thuc hien thanh cong voi anh: "<< j<<std::endl;
       }
-      // Thêm image_result vào results
-      out_img.id= m+i ; /// phan ID nay can xem lai, voi batch size=1 thi dung, con neu batchsize khac thi chua chac
-      trt_outputs.push_back(out_img);
+      
+      // Preprocess
+      //std:: cout<<"Preprocess" << std::endl;
+      cuda_batch_preprocess(img_batch, gpu_buffers[0], kInputW, kInputH, stream);
 
-    }
+      // Run inference
+
+      infer(*context, stream, (void**)gpu_buffers, cpu_output_buffer, kBatchSize);
+    
+      // NMS
+      std::vector<std::vector<Detection>> res_batch;
+      batch_nms(res_batch, cpu_output_buffer, img_batch.size(), kOutputSize, kConfThresh, kNmsThresh);
+
+      // Draw bounding boxes
+      draw_bbox(img_batch, res_batch);
+      // Input 
+      for(size_t n =0; n <img_batch.size(); n++){
+        trt_inputs[n +i].input_img = img_batch[n];
+        trt_inputs[n +i].id_img = n+i;
+      }
+      //Output
+      for (size_t m = 0; m < img_batch.size(); m++) {
+        auto& res = res_batch[m];
+        //cv::Mat img = img_batch[i];
+        std::vector<trt_results> image_result;
+        IMXAIEngine::trt_output out_img;
+        for (size_t j = 0; j < res.size(); j++) {
+              trt_results boundingbox_result;
+              boundingbox_result.ClassID = res[j].class_id;
+              boundingbox_result.Confidence = res[j].conf;
+              boundingbox_result.bbox[0] = res[j].bbox[0];
+              boundingbox_result.bbox[1] = res[j].bbox[1];
+              boundingbox_result.bbox[2] = res[j].bbox[2];
+              boundingbox_result.bbox[3] = res[j].bbox[3];
+
+              //image_result.push_back(boundingbox_result);
+              out_img.results.push_back(boundingbox_result);
+        }
+        // Thêm image_result vào results
+        out_img.id= m+i ; /// phan ID nay can xem lai, voi batch size=1 thi dung, con neu batchsize khac thi chua chac
+        trt_outputs.push_back(out_img);
+
+      }
 
 
-    //Save images
-    // std::string path = "../images/";
-    // for (size_t j = 0; j < img_batch.size(); j++) {
-    //   cv::imwrite(path + "player_b4_" + std::to_string(j + i) + ".png", img_batch[j]);  // May be duong dan can thay doi
-    // }
+      //Save images
+      // std::string path = "../images/";
+      // for (size_t j = 0; j < img_batch.size(); j++) {
+      //   cv::imwrite(path + "player_b4_" + std::to_string(j + i) + ".png", img_batch[j]);  // May be duong dan can thay doi
+      // }
     
     }
-    auto end = std::chrono::system_clock::now();
-    std::cout << "inference time: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
+    // auto end = std::chrono::system_clock::now();
+    // std::cout << "inference time: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
 
     return TRT_RESULT_SUCCESS;
 }
