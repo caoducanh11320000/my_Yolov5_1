@@ -7,7 +7,7 @@ pip3 install --upgrade pip
 git clone https://github.com/ultralytics/yolov5
 
 ### Step 3: install the below dependency ###
-cd yolov5
+cd yolov5  
 sudo apt install -y libfreetype6-dev 
 
 ### Step 4: Install the necessary packages ###
